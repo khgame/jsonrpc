@@ -10,7 +10,7 @@ export interface IJsonRpcError {
 
 export interface IJsonRpcNotification extends IJsonRpcBase {
     method: string;
-    params?: any[];
+    params?: any;
 }
 
 export interface IJsonRpcRequest extends IJsonRpcNotification {
