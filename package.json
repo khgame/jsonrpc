@@ -1,7 +1,7 @@
 {
   "name": "@khgame/jsonrpc",
   "version": "0.1.2",
-  "description": "jsonrpc toolkits - interfaces",
+  "description": "A library that helps you quickly reference the jsonrpc specification,  as well as create hense use jsonrpc clients/servers.",
   "main": "./lib/index.js",
   "scripts": {
     "test": "mocha -r ./node_modules/ts-node/register ./**/*.test.ts --exit",

@@ -23,7 +23,40 @@ import {
     } from '@khgame/jsonrpc' // or `= require('@khgame/jsonrpc')`
 ```
 
+### create rpc server
+
+> [example/server](https://github.com/khgame/jsonrpc/blob/master/example/server/index.ts)  
+> You can clone the repo, and run `npm run ep:server` to start the example 
+
+```js
+import {Param, SMethod, STarget} from '@khgame/jsonrpc';
+import {Server} from '@khgame/jsonrpc'
+
+@STarget('math')
+class MathController {
+
+    @SMethod()
+    public add(a: number, b: number) {
+        console.log('add', a, b)
+        return a + b;
+    }
+
+    @SMethod('add2')
+    public anotherAdd(@Param('first') a: number, @Param('second') b: number) {
+        console.log('add2', a, b)
+        return a + b;
+    }
+}
+
+const server = new Server();
+server.init([MathController]);
+server.listen(8001);
+```
+
 ### use rpc client
+
+> [example/client](https://github.com/khgame/jsonrpc/blob/master/example/client/index.ts)  
+> You can clone the repo, and run `npm run ep:client` to start the example
 
 ```js
 import {CMethod, Param, Target} from '@khgame/jsonrpc';
@@ -49,30 +82,5 @@ instance.add2(1,2); // the request will be
 // response add2 :  { jsonrpc: '2.0', result: 3 }
 ```
 
-### create rpc server
-```js
-import {Param, SMethod, STarget} from '../../src';
-import {Server} from '../../src'
-
-@STarget('math')
-class MathController {
-
-    @SMethod()
-    public add(a: number, b: number) {
-        console.log('add', a, b)
-        return a + b;
-    }
-
-    @SMethod('add2')
-    public anotherAdd(@Param('first') a: number, @Param('second')b: number) {
-        console.log('add2', a, b)
-        return a + b;
-    }
-}
-
-const server = new Server();
-server.init([MathController]);
-server.listen(8001);
-```
 
 
