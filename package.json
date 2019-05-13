@@ -1,6 +1,6 @@
 {
-  "alias": "@khgame/jsonrpc",
-  "version": "0.1.1",
+  "name": "@khgame/jsonrpc",
+  "version": "0.1.2",
   "description": "jsonrpc toolkits - interfaces",
   "main": "./lib/index.js",
   "scripts": {
