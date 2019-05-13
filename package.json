@@ -1,0 +1,36 @@
+{
+  "name": "@khgame/jsonrpc",
+  "version": "0.1.0",
+  "description": "jsonrpc toolkits : interfaces",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "mocha -r ./node_modules/ts-node/register ./**/*.test.ts --exit",
+    "build": "rimraf ./lib/ && npx tsc",
+    "lint": "tslint --fix --project .",
+    "prepublishOnly": "npm run test && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khgame/jsonrpc.git"
+  },
+  "author": "bagaking <kinghand@foxmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/khgame/jsonrpc/issues"
+  },
+  "homepage": "https://github.com/khgame/jsonrpc#readme",
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
+    "chai": "^4.2.0",
+    "mocha": "^6.1.4",
+    "rimraf": "^2.6.3",
+    "ts-loader": "^6.0.0",
+    "ts-node": "^8.1.0",
+    "tslint": "^5.16.0",
+    "typescript": "^3.4.5"
+  },
+  "files": [
+    "lib"
+  ]
+}
