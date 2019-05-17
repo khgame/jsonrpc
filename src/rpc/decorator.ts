@@ -27,8 +27,9 @@ export function assembleParams(object: Object, methodName: string, args: any[]) 
     }
 }
 
-export function disassambleParams(object: Object, methodName: string, params: any): any[] {
-    const matchedArgs = paramMetas.filter(arg => arg.object === object && arg.methodName === methodName); // refine index
+export function disassambleParams(methodMeta: MethodMetaType, params: any): any[] {
+    const matchedArgs = paramMetas.filter(
+        arg => arg.object === methodMeta.object && arg.methodName === methodMeta.methodName); // refine index
     if (matchedArgs.length > 0) { // using map
         const args: any[] = [];
         matchedArgs.forEach(arg => args[arg.index] = params[arg.paramName]);
@@ -43,6 +44,7 @@ export type MethodMetaType = {
     methodName: string,
     alias: string,
     targetMeta?: TargetMetaType
+    originMethod?: Function
 }
 export const methodMetas: Array<MethodMetaType> = [];
 
@@ -61,8 +63,8 @@ export function Param(paramName: string) {
 
 export function Method(name?: string) {
     return (object: Object, methodName: string, descriptor: TypedPropertyDescriptor<Function>) => {
-        methodMetas.push({object, methodName, alias: name || methodName});
         const originMethod = descriptor.value;
+        methodMetas.push({object, methodName, alias: name || methodName, originMethod});
 
         descriptor.value = async function(...args: any[]) {
             const targetMeta = targetMetas.find(tm => tm.constructor === object.constructor); // refine indexing

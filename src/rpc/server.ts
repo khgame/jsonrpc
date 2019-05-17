@@ -1,7 +1,7 @@
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import {JsonRpcErrorCode} from '../errorCode';
 import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
-import {disassambleParams, methodMetas, targetMetas} from './decorator';
+import {disassambleParams, methodMetas, MethodMetaType, targetMetas, TargetMetaType} from './decorator';
 
 export class Server {
 
@@ -62,16 +62,13 @@ export class Server {
 
     async exec(data: any, request: IncomingMessage, response: ServerResponse) {
         const assert = this.assert(response);
-        console.log('=== request : path ==-', request.url);
-        console.log('=== request : data ==-', data);
+        console.log('=== RECEIVED REQUEST ==-', request.url, data);
         try {
             const json: IJsonRpcRequest = JSON.parse(data);
             assert(json, JsonRpcErrorCode.INVALID_REQUEST, 'data must be a json');
             assert(json.jsonrpc === '2.0', JsonRpcErrorCode.INVALID_REQUEST, 'jsonrpc version must be 2.0');
-            assert(json.method, JsonRpcErrorCode.INVALID_REQUEST, 'the CMethod must be exist');
+            assert(json.method, JsonRpcErrorCode.INVALID_REQUEST, 'the Method must exist');
             const params = json.params;
-
-            console.log('=== CMethod ==-', this.requests, json.method);
             const method = this.requests[json.method];
             assert(method, JsonRpcErrorCode.METHOD_NOT_FOUND, () => `cannot find method ${json.method}`);
 
@@ -93,38 +90,58 @@ export class Server {
 
     targets: Map<Function, any> = new Map<Function, any>();
 
-    public init(constructors: Function[]) {
-        const targets =targetMetas
-            .filter(tm => constructors.indexOf(tm.constructor) > -1)
-            .map(tmi => ({...tmi, instance: new (tmi.constructor as any)()}));
+    targetConstructors: Function[] = [];
 
-        targets.map(tmi => methodMetas
-                .filter(mm => mm.object.constructor === tmi.constructor)
-                .map(mm => ({...mm, targetMeta: tmi}))
-            )
-            .reduce((prev, mms) => prev.concat(mms), [])
-            .forEach(method => {
-                const requestMethodName = method.targetMeta.prefix ? `${method.targetMeta.prefix}.${method.alias}` : method.alias;
-                this.requests[requestMethodName] =
-                    async (param: any) => {
-                        console.log('call CMethod : ', method.alias, method.methodName, param);
-                        console.log('method.object', method.object);
-                        return await Promise.resolve(
-                            method.targetMeta.instance[method.methodName](
-                                ...disassambleParams(
-                                    method.object,
-                                    method.methodName,
-                                    param)
-                            )
-                        );
-                    }
-            });
-        console.log('server initiated', this.requests);
-        targets.forEach(c => {
+    initialedTargetMetas: TargetMetaType[] = [];
+
+    initialedMethodMetas: { [route: string]: MethodMetaType } = {};
+
+    public initialTargets(): TargetMetaType[] {
+        this.initialedTargetMetas = targetMetas
+            .filter(tm => this.targetConstructors.indexOf(tm.constructor) > -1)
+            .map(tmi => ({
+                    ...tmi,
+                    instance: new (tmi.constructor as any)()
+                })
+            );
+        this.initialedTargetMetas.forEach(c => {
             this.targets.set(c.constructor, c.instance);
         });
+        return this.initialedTargetMetas;
+    }
 
-        return this.targets;
+    public initialMethods(): { [route: string]: MethodMetaType } {
+        this.initialedTargetMetas.map(tmi => methodMetas
+            .filter(mm => mm.object.constructor === tmi.constructor)
+            .map(mm => ({
+                ...mm,
+                targetMeta: tmi
+            })))
+            .reduce((prev, mms) => prev.concat(mms), [])
+            .forEach(methodMeta => {
+                const tmi = methodMeta.targetMeta;
+                const alias = methodMeta.alias;
+                const requestMethodName = tmi.prefix ? `${tmi.prefix}.${alias}` : alias;
+                this.initialedMethodMetas[requestMethodName] = methodMeta;
+                this.requests[requestMethodName] =
+                    async (param: any) => {
+                        // console.log('call Method : ', tmi, alias, methodMeta.methodName, param);
+                        const result = await Promise.resolve(
+                            methodMeta.originMethod.apply(
+                                tmi.instance,
+                                disassambleParams(methodMeta, param))
+                        );
+                        return result;
+                    }
+            });
+        return this.initialedMethodMetas;
+    }
+
+
+    public init(constructors: Function[]) {
+        this.targetConstructors = constructors;
+        this.initialTargets();
+        this.initialMethods();
     }
 
 }

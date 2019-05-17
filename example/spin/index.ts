@@ -17,25 +17,30 @@ class MathController {
     }
 }
 
-const server = new Server();
-const targets = server.init([MathController]);
-server.listen();
+async function go() {
+    const server = new Server();
+    server.init([MathController]);
+    server.listen();
 
-const math = targets.get(MathController);
+    const math = server.targets.get(MathController);
 
 // local call
-console.log('==== locale call 1');
-math.add(1,2);
-math.anotherAdd(1,2);
+    console.log('==== locale call 1');
+    console.log('=>', await math.add(1, 2));
+    console.log('=>', await math.anotherAdd(1, 2));
 
 // remote call
-console.log('==== remote call 1');
-Client.listen('game', 'http://localhost:8001/game');
-math.add(1,2);
-math.anotherAdd(1,2);
+    console.log('==== remote call 1');
+    Client.listen('game', 'http://localhost:8001/game');
+    console.log('=>', await math.add(1, 2));
+    console.log('=>', await math.anotherAdd(1, 2));
 
 // local call
-console.log('==== locale call 2');
-Client.unlisten('game');
-math.add(1,2);
-math.anotherAdd(1,2);
+    console.log('==== locale call 2');
+    Client.unlisten('game');
+    console.log('=>', await math.add(1, 2));
+    console.log('=>', await math.anotherAdd(1, 2));
+
+    console.log(server);
+}
+go()
