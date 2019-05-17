@@ -62,7 +62,6 @@ export class Server {
 
     async exec(data: any, request: IncomingMessage, response: ServerResponse) {
         const assert = this.assert(response);
-        const path = pathToRegExp.compile(request.url);
         console.log('=== request : path ==-', request.url);
         console.log('=== request : data ==-', data);
         try {
