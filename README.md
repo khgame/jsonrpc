@@ -140,3 +140,24 @@ math.add(1,2);
 math.anotherAdd(1,2);
 ```
 
+results of the example:
+```bash
+==== locale call 1
+=> 3
+=> 3
+==== remote call 1
+rpc(game).math.add
+CLIENT> SEND REQUEST : http://localhost:8001/game math.add {"jsonrpc":"2.0","method":"math.add","params":[1,2],"id":1558115246194}
+SERVER> REQUEST RECEIVED : /game {"jsonrpc":"2.0","method":"math.add","params":[1,2],"id":1558115246194}
+CLIENT> GET RESPONSE :  { jsonrpc: '2.0', result: 3 }
+=> 3
+rpc(game).math.add2
+CLIENT> SEND REQUEST : http://localhost:8001/game math.add2 {"jsonrpc":"2.0","method":"math.add2","params":{"second":2,"first":1},"id":1558115246218}
+SERVER> REQUEST RECEIVED : /game {"jsonrpc":"2.0","method":"math.add2","params":{"second":2,"first":1},"id":1558115246218}
+CLIENT> GET RESPONSE :  { jsonrpc: '2.0', result: 3 }
+=> 3
+==== locale call 2
+=> 3
+=> 3
+```
+
