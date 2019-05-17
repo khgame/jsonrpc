@@ -1,12 +1,12 @@
-import {CMethod, Param, Target} from '../../src';
+import {Method, Param, Target} from '../../src';
 
-@Target('game_server', 'math')
+@Target('game', 'math')
 export class MathController {
 
-    @CMethod()
+    @Method()
     add(a: number, b: number) {}
 
-    @CMethod()
+    @Method()
     add2(@Param('first') a: number, @Param('second') b: any) {}
 
 }
