@@ -1,14 +1,20 @@
 import {Client} from './client';
 
-type TargetMetaType = {
-    prefix: string,
-    target: Function,
+export type TargetMetaType = {
+    constructor: Function,
+    tag: string,
+    prefix?: string,
     client?: () => Client,
     instance?: any
 }
 export const targetMetas: Array<TargetMetaType> = [];
 
-type ParamMetaType = { object: Object, methodName: string, index: number, paramName: string }
+export type ParamMetaType = {
+    object: Object,
+    methodName: string,
+    index: number,
+    paramName: string
+}
 export const paramMetas: Array<ParamMetaType> = [];
 export function assembleParams(object: Object, methodName: string, args: any[]) {
     const matchedArgs = paramMetas.filter(arg => arg.object === object && arg.methodName === methodName); // refine index
@@ -32,18 +38,18 @@ export function disassambleParams(object: Object, methodName: string, params: an
     }
 }
 
-export type MethodMetaType = { object: Object, methodName: string, alias: string, targetMeta?: TargetMetaType }
+export type MethodMetaType = {
+    object: Object,
+    methodName: string,
+    alias: string,
+    targetMeta?: TargetMetaType
+}
 export const methodMetas: Array<MethodMetaType> = [];
 
-export function STarget(prefix?: string) {
-    return (target: Function) => {
-        targetMetas.push({target, prefix})
-    }
-}
-
-export function SMethod(name?: string) {
-    return (object: Object, methodName: string) => {
-        methodMetas.push({object, methodName, alias: name || methodName});
+export function Target(tag: string, prefix?: string) {
+    return (constructor: Function) => {
+        console.log('Target', constructor);
+        targetMetas.push({constructor, tag, prefix, client: () => Client.get(tag)})
     }
 }
 
@@ -53,20 +59,23 @@ export function Param(paramName: string) {
     };
 }
 
-export function Target(tag: string, prefix?: string) {
-    return (target: Function) => {
-        console.log('Target', target);
-        targetMetas.push({target, prefix, client: () => Client.get(tag)})
-    }
-}
-
-export function CMethod(name?: string) {
+export function Method(name?: string) {
     return (object: Object, methodName: string, descriptor: TypedPropertyDescriptor<Function>) => {
-        const method = name || methodName;
-        console.log('CMethod', method);
-        descriptor.value = async (...args: any[]) => {
-            const targetMeta = targetMetas.find(tm => tm.target === object.constructor); // refine indexing
+        methodMetas.push({object, methodName, alias: name || methodName});
+        const originMethod = descriptor.value;
+
+        descriptor.value = async function(...args: any[]) {
+            const targetMeta = targetMetas.find(tm => tm.constructor === object.constructor); // refine indexing
+            const callTag = targetMeta.tag;
+            /** if client haven't listen this tag, call directly */
+            if(!Client.targetExist(callTag)) {
+                console.log('locale call');
+                return await originMethod.apply(this, args);
+            }
+            /** otherwise, using rpc */
+            const method = name || methodName;
             const methodPath = targetMeta.prefix ? `${targetMeta.prefix}.${method}` : method;
+            console.log(`rpc(${callTag}).${methodPath}`);
             return await targetMeta.client().request(methodPath, assembleParams(object, methodName, args));
         }
     }

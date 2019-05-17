@@ -17,9 +17,17 @@ export class Client {
         return this.clients[tag] = new Client(url);
     }
 
+    public static unlisten(tag: string) {
+        this.clients[tag] = undefined; // todo: temprary
+    }
+
+    public static targetExist(tag: string) {
+        return !!this.clients[tag];
+    }
+
     private static loadAxios() {
         if (!require) {
-            throw new Error('Cannot load mongoose. Try to install all required dependencies.');
+            throw new Error('Cannot load axios. Try to install all required dependencies.');
         }
         if (!this.axios) {
             try {

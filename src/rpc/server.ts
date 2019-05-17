@@ -5,7 +5,7 @@ import {disassambleParams, methodMetas, targetMetas} from './decorator';
 
 export class Server {
 
-    listen(port?: number) {
+    public listen(port?: number): any {
         const server = createServer(this.callback());
         port = port || 8001;
         const ret = server.listen(port);
@@ -22,11 +22,12 @@ export class Server {
 
             let content = '';
             request.setEncoding('utf8');
-            request.on('data', function (chunk) {
+            // request.url
+            request.on('data', function (chunk: string) {
                 content += chunk;
             });
             request.on('end', async () => {
-                await this.exec(content, response);
+                await this.exec(content, request, response);
             });
         }
     }
@@ -40,8 +41,9 @@ export class Server {
     }
 
     rsp(response: ServerResponse, content: any) {
-        response.writeHead(200, {'Content-Type': 'text/json'});
-        response.write(JSON.stringify(content));
+        const data = JSON.stringify(content);
+        response.writeHead(200, {'Content-Type': 'text/json', 'Content-Length': data.length});
+        response.write(data);
         response.end();
     }
 
@@ -58,9 +60,11 @@ export class Server {
         }
     }
 
-    async exec(data: any, response: ServerResponse) {
+    async exec(data: any, request: IncomingMessage, response: ServerResponse) {
         const assert = this.assert(response);
-        console.log('=== response ==-', data);
+        const path = pathToRegExp.compile(request.url);
+        console.log('=== request : path ==-', request.url);
+        console.log('=== request : data ==-', data);
         try {
             const json: IJsonRpcRequest = JSON.parse(data);
             assert(json, JsonRpcErrorCode.INVALID_REQUEST, 'data must be a json');
@@ -88,17 +92,21 @@ export class Server {
 
     requests: { [route: string]: (...args: any[]) => Promise<any> } = {};
 
-    init(constructors: Function[]) {
-        targetMetas
-            .filter(tm => constructors.indexOf(tm.target) > -1)
-            .map(tmi => ({...tmi, instance: new (tmi.target as any)()}))
-            .map(tmi => methodMetas
-                .filter(mm => mm.object.constructor === tmi.target)
+    targets: Map<Function, any> = new Map<Function, any>();
+
+    public init(constructors: Function[]) {
+        const targets =targetMetas
+            .filter(tm => constructors.indexOf(tm.constructor) > -1)
+            .map(tmi => ({...tmi, instance: new (tmi.constructor as any)()}));
+
+        targets.map(tmi => methodMetas
+                .filter(mm => mm.object.constructor === tmi.constructor)
                 .map(mm => ({...mm, targetMeta: tmi}))
             )
             .reduce((prev, mms) => prev.concat(mms), [])
-            .forEach(method =>
-                this.requests[method.targetMeta.prefix ? `${method.targetMeta.prefix}.${method.alias}` : method.alias] =
+            .forEach(method => {
+                const requestMethodName = method.targetMeta.prefix ? `${method.targetMeta.prefix}.${method.alias}` : method.alias;
+                this.requests[requestMethodName] =
                     async (param: any) => {
                         console.log('call CMethod : ', method.alias, method.methodName, param);
                         console.log('method.object', method.object);
@@ -110,8 +118,14 @@ export class Server {
                                     param)
                             )
                         );
-                    });
+                    }
+            });
         console.log('server initiated', this.requests);
+        targets.forEach(c => {
+            this.targets.set(c.constructor, c.instance);
+        });
+
+        return this.targets;
     }
 
 }
