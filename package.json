@@ -1,6 +1,6 @@
 {
   "name": "@khgame/jsonrpc",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A library that helps you quickly reference the jsonrpc specification,  as well as create hense use jsonrpc clients/servers.",
   "main": "./lib/index.js",
   "scripts": {

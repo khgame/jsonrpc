@@ -85,7 +85,7 @@ instance.add2(1,2); // the request will be
 ### both
 
 Obviously, the definition of controller on Client and Server is totally same,  
-so you can using the method Client.listen to switch the target platform of running codes.
+so you can use the method Client.listen to switch the target platform of running codes.
 
 This can be applied to many scenarios, such as load balancing and parallel expansion,   
 and there are also many benefits of code version controlling.
