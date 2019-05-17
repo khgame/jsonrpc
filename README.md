@@ -23,14 +23,15 @@ import {
     } from '@khgame/jsonrpc' // or `= require('@khgame/jsonrpc')`
 ```
 
-### create rpc server
+### server side
+
+Building an rpc server with this lib is very simple
 
 > [example/server](https://github.com/khgame/jsonrpc/blob/master/example/server/index.ts)  
 > You can clone the repo, and run `npm run ep:server` to start the example 
 
 ```js
-import {Param, SMethod, STarget} from '@khgame/jsonrpc';
-import {Server} from '@khgame/jsonrpc'
+import {Param, Server, Method, Target} from '@khgame/jsonrpc';
 
 @Target('game', 'math')
 class MathController {
@@ -53,13 +54,16 @@ server.init([MathController]);
 server.listen(8001);
 ```
 
-### use rpc client
+### client side
 
+With very little configuration, you can create a client that can send jsonrpc messages.
+
+> In this version, you need to install axios package yourself. `npm i --save axios`  
 > [example/client](https://github.com/khgame/jsonrpc/blob/master/example/client/index.ts)  
 > You can clone the repo, and run `npm run ep:client` to start the example
 
 ```js
-import {CMethod, Param, Target} from '@khgame/jsonrpc';
+import {Method, Param, Target} from '@khgame/jsonrpc';
 
 @Target('game', 'math')
 export class MathController {
@@ -91,7 +95,7 @@ This can be applied to many scenarios, such as load balancing and parallel expan
 and there are also many benefits of code version controlling.
 
 > [example/spin](https://github.com/khgame/jsonrpc/blob/master/example/spin/index.ts)  
-> You can clone the repo, and run `npm run ep:client` to start the example
+> You can clone the repo, and run `npm run ep:spin` to start the example
 
 ```js
 import {Client, Server, Method, Param, Target} from '@khgame/jsonrpc';
