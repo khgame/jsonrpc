@@ -32,16 +32,16 @@ import {
 import {Param, SMethod, STarget} from '@khgame/jsonrpc';
 import {Server} from '@khgame/jsonrpc'
 
-@STarget('math')
+@Target('game', 'math')
 class MathController {
 
-    @SMethod()
+    @Method()
     public add(a: number, b: number) {
         console.log('add', a, b)
         return a + b;
     }
 
-    @SMethod('add2')
+    @Method('add2')
     public anotherAdd(@Param('first') a: number, @Param('second') b: number) {
         console.log('add2', a, b)
         return a + b;
@@ -61,17 +61,17 @@ server.listen(8001);
 ```js
 import {CMethod, Param, Target} from '@khgame/jsonrpc';
 
-@Target('game_server', 'math')
+@Target('game', 'math')
 export class MathController {
 
-    @CMethod()
+    @Method()
     add(a: number, b: number) {} 
 
-    @CMethod()
+    @Method()
     add2(@Param('first') a: number, @Param('second') b: any) {}
 }
 
-Client.listen('game_server', 'http://localhost:8001');
+Client.listen('game', 'http://localhost:8001/game');
 const instance = new MathController();
 instance.add(1,2);  // the request will be 
                     // { jsonrpc: '2.0', method: 'math.add', params: [ 1, 2 ], id: ... }
@@ -82,5 +82,57 @@ instance.add2(1,2); // the request will be
 // response add2 :  { jsonrpc: '2.0', result: 3 }
 ```
 
+### both
 
+Obviously, the definition of controller on Client and Server is totally same,  
+so you can using the method Client.listen to switch the target platform of running codes.
+
+This can be applied to many scenarios, such as load balancing and parallel expansion,   
+and there are also many benefits of code version controlling.
+
+> [example/spin](https://github.com/khgame/jsonrpc/blob/master/example/spin/index.ts)  
+> You can clone the repo, and run `npm run ep:client` to start the example
+
+```js
+import {Client, Server, Method, Param, Target} from '@khgame/jsonrpc';
+
+@Target('game', 'math')
+class MathController {
+
+    @Method()
+    public add(a: number, b: number) {
+        console.log('add', a, b)
+        return a + b;
+    }
+
+    @Method('add2')
+    public anotherAdd(@Param('first') a: number, @Param('second')b: number) {
+        console.log('add2', a, b)
+        return a + b;
+    }
+}
+
+const server = new Server();
+const targets = server.init([MathController]);
+server.listen();
+
+const math = targets.get(MathController);
+
+// local call
+console.log('==== locale call 1');
+math.add(1,2);
+math.anotherAdd(1,2);
+
+// remote call
+console.log('==== remote call 1');
+Client.listen('game', 'http://localhost:8001/game');
+math.add(1,2);
+math.anotherAdd(1,2);
+
+// local call
+console.log('==== locale call 2');
+Client.unlisten('game');
+math.add(1,2);
+math.anotherAdd(1,2);
+```
 
