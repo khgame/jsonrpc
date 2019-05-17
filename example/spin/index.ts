@@ -6,13 +6,13 @@ class MathController {
 
     @Method()
     public add(a: number, b: number) {
-        console.log('add', a, b)
+        // console.log('add', a, b)
         return a + b;
     }
 
     @Method('add2')
     public anotherAdd(@Param('first') a: number, @Param('second')b: number) {
-        console.log('add2', a, b)
+        // console.log('add2', a, b)
         return a + b;
     }
 }
@@ -41,6 +41,6 @@ async function go() {
     console.log('=>', await math.add(1, 2));
     console.log('=>', await math.anotherAdd(1, 2));
 
-    console.log(server);
+    // console.log(server);
 }
 go()

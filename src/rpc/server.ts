@@ -62,7 +62,7 @@ export class Server {
 
     async exec(data: any, request: IncomingMessage, response: ServerResponse) {
         const assert = this.assert(response);
-        console.log('=== RECEIVED REQUEST ==-', request.url, data);
+        console.log('SERVER> REQUEST RECEIVED :', request.url, data);
         try {
             const json: IJsonRpcRequest = JSON.parse(data);
             assert(json, JsonRpcErrorCode.INVALID_REQUEST, 'data must be a json');

@@ -67,18 +67,19 @@ export function Method(name?: string) {
         methodMetas.push({object, methodName, alias: name || methodName, originMethod});
 
         descriptor.value = async function(...args: any[]) {
-            const targetMeta = targetMetas.find(tm => tm.constructor === object.constructor); // refine indexing
+            const targetMeta = targetMetas.find(tm => tm.constructor === object.constructor); // todo: refine indexing
             const callTag = targetMeta.tag;
             /** if client haven't listen this tag, call directly */
             if(!Client.targetExist(callTag)) {
-                console.log('locale call');
+                // console.log('locale call');
                 return await originMethod.apply(this, args);
             }
             /** otherwise, using rpc */
             const method = name || methodName;
             const methodPath = targetMeta.prefix ? `${targetMeta.prefix}.${method}` : method;
             console.log(`rpc(${callTag}).${methodPath}`);
-            return await targetMeta.client().request(methodPath, assembleParams(object, methodName, args));
+            const rsp = await targetMeta.client().request(methodPath, assembleParams(object, methodName, args));
+            return rsp.result; // todo: error check
         }
     }
 }

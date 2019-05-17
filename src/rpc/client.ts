@@ -53,7 +53,7 @@ export class Client {
             params,
             id: Date.now()
         };
-        console.log('> SEND REQUEST :', this.url, method, request);
+        console.log('CLIENT> SEND REQUEST :', this.url, method, JSON.stringify(request));
 
         const rsp = await this.axios.post(
             this.url,
@@ -62,7 +62,7 @@ export class Client {
                 headers: {Accept: 'application/json'}
             });
 
-        console.log('response : ', rsp.data);
+        console.log('CLIENT> GET RESPONSE : ', rsp.data);
         return rsp.data as IJsonRpcResponse;
     }
 }
