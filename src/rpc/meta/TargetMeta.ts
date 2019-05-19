@@ -2,7 +2,7 @@ import {Client} from '../client';
 
 export class TargetMeta {
 
-    static mapTable: Map<Function, TargetMeta> = new Map<Function, TargetMeta>();
+    static targetTable: Map<Function, TargetMeta> = new Map<Function, TargetMeta>();
 
     static create(
         targetClass: Function,
@@ -10,15 +10,15 @@ export class TargetMeta {
         prefix?: string,
     ) {
         const targetMeta = new TargetMeta(targetClass, tag, prefix);
-        this.mapTable.set(targetClass, targetMeta);
+        this.targetTable.set(targetClass, targetMeta);
     }
 
     static find(targetClass: Function) {
-        return this.mapTable.get(targetClass);
+        return this.targetTable.get(targetClass);
     }
 
     static exist(targetClass: Function) {
-        return this.mapTable.has(targetClass);
+        return this.targetTable.has(targetClass);
     }
 
     constructor(

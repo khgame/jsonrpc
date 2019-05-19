@@ -1,36 +1,7 @@
 import {Client} from './client';
+import {ParamMeta} from './meta/ParamMeta';
 import {TargetMeta} from './meta/TargetMeta';
 
-export type ParamMetaType = {
-    object: Object,
-    methodName: string,
-    index: number,
-    paramName: string
-}
-export const paramMetas: Array<ParamMetaType> = [];
-export function assembleParams(methodMeta: MethodMetaType, args: any[]) {
-    const matchedArgs = paramMetas
-        .filter(arg => arg.object === methodMeta.object && arg.methodName === methodMeta.methodName); // refine index
-    if (matchedArgs.length > 0) { // using map
-        const data: any = {};
-        matchedArgs.forEach(arg => data[arg.paramName] = args[arg.index]);
-        return data;
-    } else { // using array
-        return args;
-    }
-}
-
-export function disassambleParams(methodMeta: MethodMetaType, params: any): any[] {
-    const matchedArgs = paramMetas.filter(
-        arg => arg.object === methodMeta.object && arg.methodName === methodMeta.methodName); // refine index
-    if (matchedArgs.length > 0) { // using map
-        const args: any[] = [];
-        matchedArgs.forEach(arg => args[arg.index] = params[arg.paramName]);
-        return args;
-    } else { // using array
-        return params as any[];
-    }
-}
 
 export type MethodMetaType = {
     object: Object,
@@ -41,6 +12,29 @@ export type MethodMetaType = {
 }
 export const methodMetas: Array<MethodMetaType> = [];
 
+
+export function assembleParams(methodMeta: MethodMetaType, args: any[]) {
+    const matchedArgs = ParamMeta.find(methodMeta.object.constructor, methodMeta.methodName); // refine index
+    if (matchedArgs && matchedArgs.length > 0) { // using map
+        const data: any = {};
+        matchedArgs.forEach(arg => data[arg.paramName] = args[arg.index]);
+        return data;
+    } else { // using array
+        return args;
+    }
+}
+
+export function disassambleParams(methodMeta: MethodMetaType, params: any): any[] {
+    const matchedArgs = ParamMeta.find(methodMeta.object.constructor, methodMeta.methodName);  // refine index
+    if (matchedArgs && matchedArgs.length > 0) { // using map
+        const args: any[] = [];
+        matchedArgs.forEach(arg => args[arg.index] = params[arg.paramName]);
+        return args;
+    } else { // using array
+        return params as any[];
+    }
+}
+
 export function Target(tag: string, prefix?: string) {
     return (constructor: Function) => {
         console.log('Target', constructor);
@@ -50,7 +44,7 @@ export function Target(tag: string, prefix?: string) {
 
 export function Param(paramName: string) {
     return function (object: Object, methodName: string, index: number) {
-        paramMetas.push({object, methodName, index, paramName})
+        ParamMeta.create(object, methodName, index, paramName);
     };
 }
 
