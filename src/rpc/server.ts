@@ -1,8 +1,8 @@
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import {JsonRpcErrorCode} from '../errorCode';
 import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
-import {TargetMeta} from './meta/targetMeta';
-import {MethodMeta} from './meta/methodMeta';
+import {TargetMeta} from './metas/targetMeta';
+import {MethodMeta} from './metas/methodMeta';
 
 export class Server {
 

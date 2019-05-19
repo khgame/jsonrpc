@@ -1,6 +1,6 @@
-import {MethodMeta} from './meta/methodMeta';
-import {ParamMeta} from './meta/paramMeta';
-import {TargetMeta} from './meta/targetMeta';
+import {MethodMeta} from './metas/methodMeta';
+import {ParamMeta} from './metas/paramMeta';
+import {TargetMeta} from './metas/targetMeta';
 
 export function Target(tag: string, prefix?: string) {
     return (constructor: Function) => {
