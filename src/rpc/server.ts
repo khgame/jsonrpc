@@ -3,6 +3,7 @@ import {JsonRpcErrorCode} from '../errorCode';
 import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
 import {disassambleParams, methodMetas, MethodMetaType} from './decorator';
 import {TargetMeta} from './meta/TargetMeta';
+import undefinedError = Mocha.utils.undefinedError;
 
 export class Server {
 
@@ -89,7 +90,14 @@ export class Server {
 
     requests: { [route: string]: (...args: any[]) => Promise<any> } = {};
 
-    targets: Map<Function, any> = new Map<Function, any>();
+    getTarget(targetClass: Function) {
+        const targetMeta = TargetMeta.find(targetClass);
+        if(!targetMeta) {
+            console.error(`cannot find the target : ${targetClass}, is it initialized?`);
+            return undefined;
+        }
+        return targetMeta.instance;
+    }
 
     targetConstructors: Function[] = [];
 
@@ -98,12 +106,7 @@ export class Server {
     initialedMethodMetas: { [route: string]: MethodMetaType } = {};
 
     public initialTargets(): TargetMeta[] {
-        this.initialedTargetMetas = TargetMeta.targetMetas
-            .filter(tm => this.targetConstructors.indexOf(tm.targetClass) > -1);
-        this.initialedTargetMetas.forEach(c => {
-            this.targets.set(c.targetClass, c.instance);
-        });
-        return this.initialedTargetMetas;
+        return this.initialedTargetMetas = this.targetConstructors.map(c => TargetMeta.find(c)).filter(c => c);
     }
 
     public initialMethods(): { [route: string]: MethodMetaType } {

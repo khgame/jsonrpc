@@ -2,18 +2,23 @@ import {Client} from '../client';
 
 export class TargetMeta {
 
-    static targetMetas: Array<TargetMeta> = [];
+    static mapTable: Map<Function, TargetMeta> = new Map<Function, TargetMeta>();
 
     static create(
         targetClass: Function,
         tag: string,
         prefix?: string,
     ) {
-        this.targetMetas.push(new TargetMeta(targetClass, tag, prefix));
+        const targetMeta = new TargetMeta(targetClass, tag, prefix);
+        this.mapTable.set(targetClass, targetMeta);
     }
 
     static find(targetClass: Function) {
-        return this.targetMetas.find(tm => tm.targetClass === targetClass); // todo: refine indexing
+        return this.mapTable.get(targetClass);
+    }
+
+    static exist(targetClass: Function) {
+        return this.mapTable.has(targetClass);
     }
 
     constructor(

@@ -22,7 +22,7 @@ async function go() {
     server.init([MathController]);
     server.listen();
 
-    const math = server.targets.get(MathController);
+    const math = server.getTarget(MathController);
 
 // local call
     console.log('==== locale call 1');

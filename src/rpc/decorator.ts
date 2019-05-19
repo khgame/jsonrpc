@@ -8,8 +8,9 @@ export type ParamMetaType = {
     paramName: string
 }
 export const paramMetas: Array<ParamMetaType> = [];
-export function assembleParams(object: Object, methodName: string, args: any[]) {
-    const matchedArgs = paramMetas.filter(arg => arg.object === object && arg.methodName === methodName); // refine index
+export function assembleParams(methodMeta: MethodMetaType, args: any[]) {
+    const matchedArgs = paramMetas
+        .filter(arg => arg.object === methodMeta.object && arg.methodName === methodMeta.methodName); // refine index
     if (matchedArgs.length > 0) { // using map
         const data: any = {};
         matchedArgs.forEach(arg => data[arg.paramName] = args[arg.index]);
@@ -56,7 +57,8 @@ export function Param(paramName: string) {
 export function Method(name?: string) {
     return (object: Object, methodName: string, descriptor: TypedPropertyDescriptor<Function>) => {
         const originMethod = descriptor.value;
-        methodMetas.push({object, methodName, alias: name || methodName, originMethod});
+        const methodMeta = {object, methodName, alias: name || methodName, originMethod};
+        methodMetas.push(methodMeta);
 
         descriptor.value = async function(...args: any[]) {
             const targetMeta = TargetMeta.find(object.constructor); // todo: refine indexing
@@ -70,7 +72,7 @@ export function Method(name?: string) {
             const method = name || methodName;
             const methodPath = targetMeta.prefix ? `${targetMeta.prefix}.${method}` : method;
             console.log(`rpc(${callTag}).${methodPath}`);
-            const rsp = await targetMeta.client.request(methodPath, assembleParams(object, methodName, args));
+            const rsp = await targetMeta.client.request(methodPath, assembleParams(methodMeta, args));
             return rsp.result; // todo: error check
         }
     }
