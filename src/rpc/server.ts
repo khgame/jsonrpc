@@ -1,7 +1,8 @@
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import {JsonRpcErrorCode} from '../errorCode';
 import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
-import {disassambleParams, methodMetas, MethodMetaType, targetMetas, TargetMetaType} from './decorator';
+import {disassambleParams, methodMetas, MethodMetaType} from './decorator';
+import {TargetMeta} from './meta/TargetMeta';
 
 export class Server {
 
@@ -92,27 +93,22 @@ export class Server {
 
     targetConstructors: Function[] = [];
 
-    initialedTargetMetas: TargetMetaType[] = [];
+    initialedTargetMetas: TargetMeta[] = [];
 
     initialedMethodMetas: { [route: string]: MethodMetaType } = {};
 
-    public initialTargets(): TargetMetaType[] {
-        this.initialedTargetMetas = targetMetas
-            .filter(tm => this.targetConstructors.indexOf(tm.constructor) > -1)
-            .map(tmi => ({
-                    ...tmi,
-                    instance: new (tmi.constructor as any)()
-                })
-            );
+    public initialTargets(): TargetMeta[] {
+        this.initialedTargetMetas = TargetMeta.targetMetas
+            .filter(tm => this.targetConstructors.indexOf(tm.targetClass) > -1);
         this.initialedTargetMetas.forEach(c => {
-            this.targets.set(c.constructor, c.instance);
+            this.targets.set(c.targetClass, c.instance);
         });
         return this.initialedTargetMetas;
     }
 
     public initialMethods(): { [route: string]: MethodMetaType } {
         this.initialedTargetMetas.map(tmi => methodMetas
-            .filter(mm => mm.object.constructor === tmi.constructor)
+            .filter(mm => mm.object.constructor === tmi.targetClass)
             .map(mm => ({
                 ...mm,
                 targetMeta: tmi

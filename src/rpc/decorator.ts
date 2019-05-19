@@ -1,13 +1,5 @@
 import {Client} from './client';
-
-export type TargetMetaType = {
-    constructor: Function,
-    tag: string,
-    prefix?: string,
-    client?: () => Client,
-    instance?: any
-}
-export const targetMetas: Array<TargetMetaType> = [];
+import {TargetMeta} from './meta/TargetMeta';
 
 export type ParamMetaType = {
     object: Object,
@@ -43,7 +35,7 @@ export type MethodMetaType = {
     object: Object,
     methodName: string,
     alias: string,
-    targetMeta?: TargetMetaType
+    targetMeta?: TargetMeta
     originMethod?: Function
 }
 export const methodMetas: Array<MethodMetaType> = [];
@@ -51,7 +43,7 @@ export const methodMetas: Array<MethodMetaType> = [];
 export function Target(tag: string, prefix?: string) {
     return (constructor: Function) => {
         console.log('Target', constructor);
-        targetMetas.push({constructor, tag, prefix, client: () => Client.get(tag)})
+        TargetMeta.create(constructor, tag, prefix);
     }
 }
 
@@ -67,7 +59,7 @@ export function Method(name?: string) {
         methodMetas.push({object, methodName, alias: name || methodName, originMethod});
 
         descriptor.value = async function(...args: any[]) {
-            const targetMeta = targetMetas.find(tm => tm.constructor === object.constructor); // todo: refine indexing
+            const targetMeta = TargetMeta.find(object.constructor); // todo: refine indexing
             const callTag = targetMeta.tag;
             /** if client haven't listen this tag, call directly */
             if(!Client.targetExist(callTag)) {
@@ -78,7 +70,7 @@ export function Method(name?: string) {
             const method = name || methodName;
             const methodPath = targetMeta.prefix ? `${targetMeta.prefix}.${method}` : method;
             console.log(`rpc(${callTag}).${methodPath}`);
-            const rsp = await targetMeta.client().request(methodPath, assembleParams(object, methodName, args));
+            const rsp = await targetMeta.client.request(methodPath, assembleParams(object, methodName, args));
             return rsp.result; // todo: error check
         }
     }
