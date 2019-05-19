@@ -2,6 +2,9 @@
 
 toolkits of jsonrpc
 
+![npm](https://img.shields.io/npm/v/@khgame/jsonrpc.svg)
+![NPM](https://img.shields.io/npm/l/@khgame/jsonrpc.svg)
+
 > [specification of jsonrpc](http://www.jsonrpc.org/specification)
 
 ## usage
