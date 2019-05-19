@@ -1,14 +1,12 @@
-import {MITable} from '../utils/mitable';
+import {MiTable} from '../utils/miTable';
 
 export class ParamMeta {
 
-    static paramTable: MITable<Function, string, ParamMeta[]> = new MITable<Function, string, ParamMeta[]>();
+    static paramTable: MiTable<Function, string, ParamMeta[]> = new MiTable<Function, string, ParamMeta[]>();
 
     public static find(targetClass: Function, methodName: string): ParamMeta[] {
         return this.paramTable.hGet(targetClass, methodName) || [];
     }
-
-    public targetClass: Function;
 
     static create(prototype: Object,
                   methodName: string,
@@ -21,6 +19,8 @@ export class ParamMeta {
             this.paramTable.hSet(paramMeta.targetClass, methodName, [paramMeta]);
         }
     }
+
+    public targetClass: Function;
 
     constructor(
         public prototype: Object,

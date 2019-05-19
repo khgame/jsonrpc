@@ -26,8 +26,9 @@ export class TargetMeta {
         public tag: string,
         public prefix?: string,
     ) {
-
     }
+
+    private _instance: any;
 
     get client() {
         return Client.get(this.tag);
@@ -40,6 +41,5 @@ export class TargetMeta {
         return this._instance;
     };
 
-    private _instance: any;
 }
 

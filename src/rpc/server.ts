@@ -1,9 +1,8 @@
 import {createServer, IncomingMessage, ServerResponse} from 'http';
 import {JsonRpcErrorCode} from '../errorCode';
 import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
-import {disassambleParams, methodMetas, MethodMetaType} from './decorator';
-import {TargetMeta} from './meta/TargetMeta';
-import undefinedError = Mocha.utils.undefinedError;
+import {TargetMeta} from './meta/targetMeta';
+import {MethodMeta} from './meta/methodMeta';
 
 export class Server {
 
@@ -101,45 +100,27 @@ export class Server {
 
     targetConstructors: Function[] = [];
 
-    initialedTargetMetas: TargetMeta[] = [];
-
-    initialedMethodMetas: { [route: string]: MethodMetaType } = {};
-
-    public initialTargets(): TargetMeta[] {
-        return this.initialedTargetMetas = this.targetConstructors.map(c => TargetMeta.find(c)).filter(c => c);
-    }
-
-    public initialMethods(): { [route: string]: MethodMetaType } {
-        this.initialedTargetMetas.map(tmi => methodMetas
-            .filter(mm => mm.object.constructor === tmi.targetClass)
-            .map(mm => ({
-                ...mm,
-                targetMeta: tmi
-            })))
-            .reduce((prev, mms) => prev.concat(mms), [])
+    public initialMethods() {
+        this.targetConstructors
+            .map(c => TargetMeta.find(c))
+            .filter(c => c)
+            .map(tmi => MethodMeta.list(tmi.targetClass))
+            .reduce((prev: MethodMeta[], mms: MethodMeta[]) => prev.concat(mms), [])
             .forEach(methodMeta => {
-                const tmi = methodMeta.targetMeta;
+                const tmi = methodMeta.getTargetMeta();
                 const alias = methodMeta.alias;
                 const requestMethodName = tmi.prefix ? `${tmi.prefix}.${alias}` : alias;
-                this.initialedMethodMetas[requestMethodName] = methodMeta;
                 this.requests[requestMethodName] =
                     async (param: any) => {
                         // console.log('call Method : ', tmi, alias, methodMeta.methodName, param);
-                        const result = await Promise.resolve(
-                            methodMeta.originMethod.apply(
-                                tmi.instance,
-                                disassambleParams(methodMeta, param))
-                        );
-                        return result;
+                        return await methodMeta.localCall(param);
                     }
             });
-        return this.initialedMethodMetas;
     }
 
 
     public init(constructors: Function[]) {
         this.targetConstructors = constructors;
-        this.initialTargets();
         this.initialMethods();
     }
 

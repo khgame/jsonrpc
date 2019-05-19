@@ -46,7 +46,10 @@ export class Client {
         Client.clients[this.url] = this;
     }
 
-    async request(method: string, params: any): Promise<IJsonRpcResponse> {
+    async request(method: string, params: any, moduleName?: string): Promise<IJsonRpcResponse> {
+        if(!!moduleName) {
+            method= `${moduleName}.${method}`
+        }
         const request: IJsonRpcRequest = {
             jsonrpc: '2.0',
             method,
