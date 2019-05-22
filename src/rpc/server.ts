@@ -18,6 +18,7 @@ export class Server {
         return (request: IncomingMessage, response: ServerResponse) => {
             if (request.method !== 'POST') {
                 response.writeHead(403);
+                response.end();
                 return;
             }
 

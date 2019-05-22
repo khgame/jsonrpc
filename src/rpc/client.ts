@@ -4,7 +4,8 @@ import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
 export class Client {
 
     private static axios: AxiosStatic;
-    private static clients: { [url: string]: Client } = {};
+    private static clients: { [tag: string]: Client } = {};
+    private static backup: { [url: string]: Client } = {};
 
     public static get(tag: string) {
         if (!tag) {
@@ -14,10 +15,18 @@ export class Client {
     }
 
     public static listen(tag: string, url: string) {
-        return this.clients[tag] = new Client(url);
+        return this.clients[tag] = this.backup[url] || new Client(url);
+    }
+
+    public static singleRPC<T>(tag: string, url: string, cb: () => Promise<T>): Promise<T> {
+        this.listen(tag, url);
+        const promise = cb();
+        this.unlisten(tag);
+        return promise;
     }
 
     public static unlisten(tag: string) {
+        this.backup[this.clients[tag].url] = this.clients[tag];
         this.clients[tag] = undefined; // todo: temprary
     }
 
@@ -47,8 +56,8 @@ export class Client {
     }
 
     async request(method: string, params: any, moduleName?: string): Promise<IJsonRpcResponse> {
-        if(!!moduleName) {
-            method= `${moduleName}.${method}`
+        if (!!moduleName) {
+            method = `${moduleName}.${method}`
         }
         const request: IJsonRpcRequest = {
             jsonrpc: '2.0',
@@ -68,4 +77,6 @@ export class Client {
         console.log('CLIENT> GET RESPONSE : ', rsp.data);
         return rsp.data as IJsonRpcResponse;
     }
+
+
 }
