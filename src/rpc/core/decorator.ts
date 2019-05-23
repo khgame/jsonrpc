@@ -1,6 +1,6 @@
-import {MethodMeta} from './metas/methodMeta';
-import {ParamMeta} from './metas/paramMeta';
-import {TargetMeta} from './metas/targetMeta';
+import {MethodMeta} from '../metas/methodMeta';
+import {ParamMeta} from '../metas/paramMeta';
+import {TargetMeta} from '../metas/targetMeta';
 
 /**
  * Mark a target
@@ -9,7 +9,7 @@ import {TargetMeta} from './metas/targetMeta';
  */
 export function Target(tag: string, prefix?: string) {
     return (constructor: Function) => {
-        console.log('Target', constructor);
+        // console.log('Target', constructor);
         TargetMeta.create(constructor, tag, prefix);
     }
 }

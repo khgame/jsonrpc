@@ -1,23 +1,24 @@
 import {createServer, IncomingMessage, ServerResponse} from 'http';
-import {JsonRpcErrorCode} from '../errorCode';
-import {IJsonRpcRequest, IJsonRpcResponse} from '../iJsonRpc';
+import {IJsonRpcRequest} from '../iJsonRpc';
+import {Dispatcher} from './core/dispatcher';
 import {TargetMeta} from './metas/targetMeta';
-import {MethodMeta} from './metas/methodMeta';
 
 export class Server {
+
+    dispatcher: Dispatcher;
 
     public listen(port?: number): any {
         const server = createServer(this.callback());
         port = port || 8001;
         const ret = server.listen(port);
-        console.log(`start listen at http://localhost:${port}`)
+        console.log(`start listen at http://localhost:${port}`);
         return ret;
     }
 
     callback() {
         return (request: IncomingMessage, response: ServerResponse) => {
             if (request.method !== 'POST') {
-                response.writeHead(403);
+                response.writeHead(405);
                 response.end();
                 return;
             }
@@ -34,13 +35,6 @@ export class Server {
         }
     }
 
-    rspError(response: ServerResponse, code: number, message: string) {
-        const err: IJsonRpcResponse = {
-            jsonrpc: '2.0',
-            error: {code, message}
-        }
-        this.rsp(response, err);
-    }
 
     rsp(response: ServerResponse, content: any) {
         const data = JSON.stringify(content);
@@ -49,46 +43,16 @@ export class Server {
         response.end();
     }
 
-    assert(response: ServerResponse) {
-        return (condition: any, code: number, msg: string | (() => string)) => {
-            if (!!condition) return;
-            if (msg instanceof Function) {
-                msg = msg()
-            }
-            if (!condition) {
-                this.rspError(response, code, msg);
-                throw '__ASSERT__';
-            }
-        }
-    }
-
     async exec(data: any, request: IncomingMessage, response: ServerResponse) {
-        const assert = this.assert(response);
-        console.log('SERVER> REQUEST RECEIVED :', request.url, data);
-        try {
-            const json: IJsonRpcRequest = JSON.parse(data);
-            assert(json, JsonRpcErrorCode.INVALID_REQUEST, 'data must be a json');
-            assert(json.jsonrpc === '2.0', JsonRpcErrorCode.INVALID_REQUEST, 'jsonrpc version must be 2.0');
-            assert(json.method, JsonRpcErrorCode.INVALID_REQUEST, 'the Method must exist');
-            const params = json.params;
-            const method = this.requests[json.method];
-            assert(method, JsonRpcErrorCode.METHOD_NOT_FOUND, () => `cannot find method ${json.method}`);
-
-            const rsp: IJsonRpcResponse = {
-                jsonrpc: '2.0',
-            }
-            // console.log('=== CMethod ===', CMethod, params);
-            rsp.result = await method(params);
-            this.rsp(response, rsp);
-        } catch (e) {
-            if (e === '__ASSERT__') {
-                return;
-            }
-            this.rspError(response, JsonRpcErrorCode.INTERNAL_ERROR, `${e}`);
+        if(!this.dispatcher) {
+            throw new Error('the dispatcher haven\'t been created, try to call init befor the exec method');
         }
-    }
 
-    requests: { [route: string]: (...args: any[]) => Promise<any> } = {};
+        console.log('SERVER> REQUEST RECEIVED :', request.url, data);
+        const json: IJsonRpcRequest = JSON.parse(data);
+        const rsp = await this.dispatcher.exec(json);
+        this.rsp(response, rsp);
+    }
 
     getTarget(targetClass: Function) {
         const targetMeta = TargetMeta.find(targetClass);
@@ -99,30 +63,9 @@ export class Server {
         return targetMeta.instance;
     }
 
-    targetConstructors: Function[] = [];
-
-    public initialMethods() {
-        this.targetConstructors
-            .map(c => TargetMeta.find(c))
-            .filter(c => c)
-            .map(tmi => MethodMeta.list(tmi.targetClass))
-            .reduce((prev: MethodMeta[], mms: MethodMeta[]) => prev.concat(mms), [])
-            .forEach(methodMeta => {
-                const tmi = methodMeta.getTargetMeta();
-                const alias = methodMeta.alias;
-                const requestMethodName = tmi.prefix ? `${tmi.prefix}.${alias}` : alias;
-                this.requests[requestMethodName] =
-                    async (param: any) => {
-                        // console.log('call Method : ', tmi, alias, methodMeta.methodName, param);
-                        return await methodMeta.localCall(param);
-                    }
-            });
-    }
-
 
     public init(constructors: Function[]) {
-        this.targetConstructors = constructors;
-        this.initialMethods();
+        this.dispatcher = new Dispatcher(constructors);
     }
 
 }
