@@ -11,7 +11,7 @@ export class Server {
         const server = createServer(this.callback());
         port = port || 8001;
         const ret = server.listen(port);
-        console.log(`start listen at http://localhost:${port}`);
+        // console.log(`start listen at http://localhost:${port}`);
         return ret;
     }
 

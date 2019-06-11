@@ -11,7 +11,7 @@ class MathController {
     }
 
     @Method('add2')
-    public anotherAdd(@Param('first') a: number, @Param('second')b: number) {
+    public async anotherAdd(@Param('first') a: number, @Param('second')b: number): Promise<number> {
         // console.log('add2', a, b)
         return a + b;
     }

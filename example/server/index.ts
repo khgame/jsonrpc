@@ -20,4 +20,4 @@ class MathController {
 const server = new Server();
 const targets = server.init([MathController]);
 server.listen();
-console.log(targets);
+// console.log(targets);
