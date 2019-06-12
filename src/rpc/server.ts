@@ -25,7 +25,7 @@ export class Server {
 
             let content = '';
             request.setEncoding('utf8');
-            // request.url
+            // console.log(request.url);
             request.on('data', function (chunk: string) {
                 content += chunk;
             });
@@ -44,11 +44,13 @@ export class Server {
     }
 
     async exec(data: any, request: IncomingMessage, response: ServerResponse) {
-        if(!this.dispatcher) {
+        if (!this.dispatcher) {
             throw new Error('the dispatcher haven\'t been created, try to call init befor the exec method');
         }
 
-        console.log('SERVER> REQUEST RECEIVED :', request.url, data);
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('jsonRpc-svr> REQUEST RECEIVED :', request.url, data);
+        }
         const json: IJsonRpcRequest = JSON.parse(data);
         const rsp = await this.dispatcher.exec(json);
         this.rsp(response, rsp);
@@ -56,7 +58,7 @@ export class Server {
 
     getTarget(targetClass: Function) {
         const targetMeta = TargetMeta.find(targetClass);
-        if(!targetMeta) {
+        if (!targetMeta) {
             console.error(`cannot find the target : ${targetClass}, is it initialized?`);
             return undefined;
         }
