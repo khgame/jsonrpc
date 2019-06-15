@@ -3,7 +3,11 @@ import {IJsonRpcRequest, IJsonRpcResponse} from '../../iJsonRpc';
 import {MethodMeta} from '../metas/methodMeta';
 import {TargetMeta} from '../metas/targetMeta';
 
+type MethodMap = { [route: string]: (...args: any[]) => Promise<any> };
+
 export class Dispatcher {
+
+    requests: { [route: string]: MethodMap } = {};
 
     constructor(targetConstructors: Function[]) {
         targetConstructors
@@ -15,7 +19,8 @@ export class Dispatcher {
                 const tmi = methodMeta.getTargetMeta();
                 const alias = methodMeta.alias;
                 const requestMethodName = tmi.prefix ? `${tmi.prefix}.${alias}` : alias;
-                this.requests[requestMethodName] =
+                this.requests[tmi.tag] = this.requests[tmi.tag] || {};
+                this.requests[tmi.tag][requestMethodName] =
                     async (param: any) => {
                         // console.log('call Method : ', tmi, alias, methodMeta.methodName, param);
                         return await methodMeta.localCall(param);
@@ -33,13 +38,13 @@ export class Dispatcher {
         }
     }
 
-    async exec(json: IJsonRpcRequest): Promise<IJsonRpcResponse> {
+    async exec(handlerTag: string, json: IJsonRpcRequest): Promise<IJsonRpcResponse> {
         try {
             this.assert(json, JsonRpcErrorCode.INVALID_REQUEST, 'data must be a json');
             this.assert(json.jsonrpc === '2.0', JsonRpcErrorCode.INVALID_REQUEST, 'jsonrpc version must be 2.0');
             this.assert(json.method, JsonRpcErrorCode.INVALID_REQUEST, 'the Method must exist');
             const params = json.params;
-            const method = this.requests[json.method];
+            const method = this.requests[handlerTag][json.method];
             this.assert(method, JsonRpcErrorCode.METHOD_NOT_FOUND, () => `cannot find method ${json.method}`);
 
             return {
@@ -70,6 +75,5 @@ export class Dispatcher {
         }
     }
 
-    requests: { [route: string]: (...args: any[]) => Promise<any> } = {};
 
 }

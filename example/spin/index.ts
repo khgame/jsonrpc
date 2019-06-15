@@ -19,7 +19,7 @@ class MathController {
 
 async function go() {
     const server = new Server();
-    server.init([MathController]);
+    server.init([MathController], {prefix: '/api'});
     server.listen();
 
     const math = server.getTarget(MathController);
@@ -31,7 +31,7 @@ async function go() {
 
 // remote call
     console.log('==== remote call 1');
-    Client.listen('game', 'http://localhost:8001/game');
+    Client.listen('game', 'http://localhost:8001/api/game');
     console.log('=>', await math.add(1, 2));
     console.log('=>', await math.anotherAdd(1, 2));
 

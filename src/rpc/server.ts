@@ -7,6 +7,8 @@ export class Server {
 
     dispatcher: Dispatcher;
 
+    prefix: string;
+
     public listen(port?: number): any {
         const server = createServer(this.callback());
         port = port || 8001;
@@ -52,7 +54,14 @@ export class Server {
             console.log('jsonRpc-svr> REQUEST RECEIVED :', request.url, data);
         }
         const json: IJsonRpcRequest = JSON.parse(data);
-        const rsp = await this.dispatcher.exec(json);
+        const head = this.prefix ? this.prefix + '/' : '/';
+        if(!this.prefix || !request.url.startsWith(head)) {
+            response.writeHead(404, {'Content-Type': 'text/json', 'Content-Length': data.length});
+            response.end();
+            return;
+        }
+        const target = request.url.slice(head.length)
+        const rsp = await this.dispatcher.exec(target, json);
         this.rsp(response, rsp);
     }
 
@@ -66,7 +75,11 @@ export class Server {
     }
 
 
-    public init(constructors: Function[]) {
+    public init(constructors: Function[], options?: {
+        prefix?: string
+    }) {
+        options = options || {};
+        this.prefix = options.prefix;
         this.dispatcher = new Dispatcher(constructors);
     }
 
